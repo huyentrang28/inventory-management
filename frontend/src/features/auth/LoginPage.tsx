@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Lock, Mail, ShieldCheck, ArrowRight } from "lucide-react";
+import { Lock, Mail, ShieldCheck, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuthStore } from "../../stores/authStore";
 import { Button } from "../../components/ui/Button";
@@ -21,6 +21,7 @@ export const LoginPage: React.FC = () => {
   const { setToken, setUser } = useAuthStore();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -39,7 +40,10 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const res = await api.post("/auth/login", data);
+      const res = await api.post("/auth/login", {
+        email: data.email.trim(),
+        password: data.password.trim(),
+      });
       setToken(res.data.access_token, res.data.refresh_token);
 
       // Fetch user profile
@@ -59,8 +63,9 @@ export const LoginPage: React.FC = () => {
   };
 
   const fillDemoAdmin = () => {
-    setValue("email", "admin@stockmanager.local");
-    setValue("password", "Admin@123456");
+    setValue("email", "admin@stockmanager.local", { shouldValidate: true });
+    setValue("password", "Admin@123456", { shouldValidate: true });
+    setErrorMessage(null);
   };
 
   return (
@@ -85,6 +90,25 @@ export const LoginPage: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 sm:px-0">
         <div className="bg-white/95 backdrop-blur-md py-8 px-6 shadow-2xl rounded-2xl border border-slate-200/80 sm:px-10">
+          {/* Quick Demo Credentials Info */}
+          <div className="mb-4 p-3 rounded-lg bg-indigo-50/90 border border-indigo-200 text-xs text-indigo-950 flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-indigo-900">Tài khoản Quản trị viên (Super Admin):</p>
+              <p className="text-slate-600 mt-0.5">
+                Email: <span className="font-mono font-medium text-indigo-700">admin@stockmanager.local</span>
+                <br />
+                Mật khẩu: <span className="font-mono font-medium text-indigo-700">Admin@123456</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={fillDemoAdmin}
+              className="px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-white border border-indigo-300 rounded shadow-sm hover:bg-indigo-50 transition-colors whitespace-nowrap ml-3"
+            >
+              Điền nhanh
+            </button>
+          </div>
+
           {errorMessage && (
             <div className="mb-5 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
               {errorMessage}
@@ -103,9 +127,20 @@ export const LoginPage: React.FC = () => {
 
             <Input
               label="Mật khẩu"
-              type="password"
-              placeholder="••••••••"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••••••"
               icon={<Lock className="w-4 h-4" />}
+              rightElement={
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-slate-400 hover:text-slate-600 focus:outline-none p-1"
+                  title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              }
               error={errors.password?.message}
               {...register("password")}
             />
